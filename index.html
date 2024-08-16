@@ -1,0 +1,417 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Superhero RNG Game</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #1c1c1c;
+            color: #fff;
+            margin: 0;
+            padding: 0;
+            text-align: center;
+            overflow-x: hidden;
+        }
+        h1 {
+            font-size: 36px;
+            margin-top: 20px;
+        }
+        #container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            max-width: 1200px;
+            margin: auto;
+            background: #333;
+            border-radius: 10px;
+        }
+        #heroSection, #villainSection {
+            flex: 1;
+            margin: 20px;
+            position: relative;
+        }
+        .hero-image-container, .villain-image-container {
+            position: relative;
+            display: inline-block;
+        }
+        .hero-image-container img, .villain-image-container img {
+            max-width: 100%;
+            border-radius: 10px;
+            margin-top: 10px;
+            width: 150px; /* Ensure images are square */
+            height: 150px; /* Ensure images are square */
+            object-fit: cover; /* Crop and resize */
+        }
+        .hero-name, .villain-name {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: #fff;
+            padding: 5px;
+            border-radius: 5px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 10px;
+            border: none;
+            border-radius: 5px;
+            background-color: #007BFF;
+            color: #fff;
+            transition: background-color 0.3s, transform 0.3s;
+        }
+        button:hover {
+            background-color: #0056b3;
+            transform: scale(1.05);
+        }
+        button:disabled {
+            background-color: grey;
+            cursor: not-allowed;
+        }
+        .close-btn {
+            background-color: red;
+            border-radius: 50%;
+            padding: 5px 10px;
+            cursor: pointer;
+            font-size: 14px;
+            color: #fff;
+            position: absolute;
+            top: 10px;
+            right: 10px;
+        }
+        #result {
+            margin-top: 20px;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        #winScore {
+            font-size: 24px;
+            font-weight: bold;
+            margin: 20px;
+        }
+        #sidebar {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            text-align: right;
+        }
+        #inventoryList {
+            display: none;
+            position: fixed;
+            top: 50px;
+            right: 20px;
+            background-color: #333;
+            padding: 20px;
+            border-radius: 10px;
+            color: #fff;
+            z-index: 1000;
+        }
+        #fightPopup {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #333;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            z-index: 1000;
+        }
+        #fightPopup button {
+            margin-top: 10px;
+        }
+        #fightContainer {
+            display: none;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            max-width: 1200px;
+            margin: auto;
+            background: #333;
+            border-radius: 10px;
+            animation: shake 2s ease infinite;
+        }
+        @keyframes shake {
+            0%, 100% { transform: translate(0, 0); }
+            20% { transform: translate(-10px, 10px); }
+            40% { transform: translate(10px, -10px); }
+            60% { transform: translate(-10px, -10px); }
+            80% { transform: translate(10px, 10px); }
+        }
+        #fightResult {
+            display: none;
+            font-size: 24px;
+            font-weight: bold;
+            margin: 20px;
+            color: red;
+        }
+        #fadeOverlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: black;
+            color: white;
+            text-align: center;
+            padding-top: 200px;
+            z-index: 10000;
+            font-size: 24px;
+        }
+    </style>
+</head>
+<body>
+    <h1>SKIBIDI TOILET RNG</h1>
+    <div id="winScore">Win Score: 0</div>
+    <div id="container">
+        <div id="heroSection">
+            <div id="hero" class="hero-image-container">
+                <img id="heroImg" class="hero-image" src="" alt="" style="display:none;">
+                <div id="heroName" class="hero-name" style="display:none;"></div>
+            </div>
+            <button id="rollBtn" onclick="getSuperhero()">Krijg een Superheld</button>
+        </div>
+        <div id="villainSection">
+            <div id="villain" class="villain-image-container" style="display: none;">
+                <img id="villainImg" class="villain-image" src="" alt="" style="display:none;">
+                <div id="villainName" class="villain-name" style="display:none;"></div>
+            </div>
+            <button id="fightBtn" style="display:none;" onclick="showFightPopup()">Vecht tegen een stoute jongen</button>
+        </div>
+    </div>
+    <p id="result"></p>
+    
+    <div id="fightPopup">
+        <p>Wil je me deze idioot vechten?</p>
+        <button onclick="startFight()">Ja vuile homo</button>
+        <button onclick="hideFightPopup()">Nee</button>
+    </div>
+
+    <div id="fightContainer">
+        <div id="heroFightSection">
+            <img id="heroFightImg" src="" alt="">
+        </div>
+        <div id="versusText" style="font-size: 48px; margin: 0 20px;">VS</div>
+        <div id="villainFightSection">
+            <img id="villainFightImg" src="" alt="">
+        </div>
+    </div>
+    
+    <p id="fightResult"></p>
+
+    <div id="fadeOverlay"></div>
+
+    <div id="sidebar">
+        <button onclick="showInventory()">Inventory</button>
+    </div>
+
+    <div id="inventoryList">
+        <span class="close-btn" onclick="hideInventory()">X</span>
+        <!-- Inventory items will be added dynamically -->
+    </div>
+
+    <audio id="buttonClick" src="buttonClick.mp3"></audio>
+    <audio id="vsSound" src="vsSound.mp3"></audio>
+    <audio id="fightSound" src="fightSound.mp3"></audio>
+    <audio id="backgroundSound" src="backgroundSound.mp3" loop></audio>
+    <audio id="fadeSound" src="fadeSound.mp3"></audio>
+
+    <script>
+        function playSound(id) {
+            const sound = document.getElementById(id);
+            if (sound) {
+                sound.currentTime = 0; // Restart the sound
+                sound.play();
+            }
+        }
+
+        const rarities = {
+            "Common": { chance: 50, powerRange: [1, 20000] },
+            "Uncommon": { chance: 30, powerRange: [20001, 50000] },
+            "Rare": { chance: 15, powerRange: [50001, 75000] },
+            "Epic": { chance: 4, powerRange: [75001, 90000] },
+            "Legendary": { chance: 1, powerRange: [90001, 100000] }
+        };
+        const heroes = [
+            { name: 'Meme', img: 'meme.png', power: 100000 },
+            { name: 'Kyan', img: 'kyan.png', power: 75000 },
+            { name: 'Arthur', img: 'arthur.png', power: 50000 },
+            { name: 'Aron', img: 'aron.png', power: 20000 },
+            { name: 'Ferre', img: 'ferre.jpg', power: 10000 }
+        ];
+        const villains = [
+            { name: 'Joker', img: 'joker.png', power: 30000 },
+            { name: 'Lex Luthor', img: 'lexluthor.jpg', power: 60000 },
+            { name: 'Cheetah', img: 'cheetah.png', power: 40000 },
+            { name: 'Sinestro', img: 'sinestro.png', power: 90000 },
+            { name: 'Bless', img: 'bless.png', power: 70000 }
+        ];
+
+        let inventory = {}; // Dictionary to hold inventory items
+        let currentHero = null;
+        let winScore = localStorage.getItem('winScore') || 0;
+        document.getElementById('winScore').innerText = `Win Score: ${winScore}`;
+
+        function getSuperhero() {
+            playSound('buttonClick');
+            const rand = Math.random() * 100;
+            let selectedRarity = '';
+            for (const [rarity, { chance }] of Object.entries(rarities)) {
+                if (rand < chance) {
+                    selectedRarity = rarity;
+                    break;
+                }
+                rand -= chance;
+            }
+            const availableHeroes = heroes.filter(hero => hero.power >= rarities[selectedRarity].powerRange[0] && hero.power <= rarities[selectedRarity].powerRange[1]);
+            currentHero = availableHeroes[Math.floor(Math.random() * availableHeroes.length)];
+
+            // Add hero to inventory
+            if (!inventory[currentHero.name]) {
+                inventory[currentHero.name] = 0;
+            }
+            inventory[currentHero.name]++;
+
+            updateInventoryDisplay();
+
+            document.getElementById("heroImg").src = currentHero.img;
+            document.getElementById("heroName").innerText = `${currentHero.name} - Power: ${currentHero.power}`;
+            document.getElementById("heroImg").style.display = 'block';
+            document.getElementById("heroName").style.display = 'block';
+            document.getElementById("fightBtn").style.display = 'block';
+        }
+
+        function showInventory() {
+            playSound('buttonClick');
+            const inventoryList = document.getElementById('inventoryList');
+            inventoryList.style.display = 'block';
+            updateInventoryDisplay();
+        }
+
+        function hideInventory() {
+            const inventoryList = document.getElementById('inventoryList');
+            inventoryList.style.display = 'none';
+        }
+
+        function updateInventoryDisplay() {
+            const inventoryList = document.getElementById('inventoryList');
+            inventoryList.innerHTML = `
+                <span class="close-btn" onclick="hideInventory()">X</span>
+                ${Object.keys(inventory).map(heroName => `
+                    <div class="inventory-item">
+                        <img src="${heroes.find(hero => hero.name === heroName).img}" alt="${heroName}">
+                        <span>${heroName} x${inventory[heroName]}</span>
+                        <button onclick="mergeHero('${heroName}')">Merge</button>
+                    </div>
+                `).join('')}
+            `;
+        }
+
+        function mergeHero(heroName) {
+            const hero = heroes.find(h => h.name === heroName);
+            if (inventory[heroName] >= 30) {
+                inventory[heroName] -= 30;
+                const mergedPower = hero.power * 2;
+                const mergedHeroName = `${heroName} Merged`;
+
+                if (!inventory[mergedHeroName]) {
+                    inventory[mergedHeroName] = 0;
+                }
+                inventory[mergedHeroName]++;
+                updateInventoryDisplay();
+
+                playSound('buttonClick');
+                alert(`Je hebt 30 ${heroName} samengevoegd tot ${mergedHeroName} met ${mergedPower} power!`);
+            } else {
+                alert(`Je hebt niet genoeg ${heroName} om te kunnen samenvoegen.`);
+            }
+        }
+
+        function showFightPopup() {
+            playSound('buttonClick');
+            document.getElementById('fightPopup').style.display = 'block';
+        }
+
+        function hideFightPopup() {
+            document.getElementById('fightPopup').style.display = 'none';
+        }
+
+        function startFight() {
+            playSound('vsSound');
+            hideFightPopup();
+            const randomVillain = villains[Math.floor(Math.random() * villains.length)];
+            document.getElementById("villainName").innerText = `${randomVillain.name} - Power: ${randomVillain.power}`;
+            document.getElementById("villainImg").src = randomVillain.img;
+            document.getElementById("villainImg").style.display = 'block';
+            document.getElementById("villainName").style.display = 'block';
+
+            // Populating the fight section
+            const heroFightImg = document.getElementById("heroFightImg");
+            const villainFightImg = document.getElementById("villainFightImg");
+
+            heroFightImg.src = currentHero.img;
+            villainFightImg.src = randomVillain.img;
+
+            heroFightImg.style.width = '150px'; 
+            heroFightImg.style.height = '150px'; 
+            heroFightImg.style.objectFit = 'cover';
+            villainFightImg.style.width = '150px'; 
+            villainFightImg.style.height = '150px'; 
+            villainFightImg.style.objectFit = 'cover';
+
+            document.getElementById("fightContainer").style.display = "flex";
+
+            playSound('fightSound');
+            document.getElementById("fightContainer").scrollIntoView({ behavior: 'smooth' });
+
+            setTimeout(() => {
+                document.getElementById("fightContainer").style.animation = "none";
+                let fightResultText = '';
+                if (currentHero.power > randomVillain.power) {
+                    document.getElementById("fightResult").innerText = "Je hebt gewonnen!";
+                    winScore++;
+                    localStorage.setItem('winScore', winScore);
+                    document.getElementById("winScore").innerText = `Win Score: ${winScore}`;
+                    fightResultText = `${currentHero.name} versloeg ${randomVillain.name} dankzij hun superieure kracht en vaardigheden!`;
+                } else {
+                    heroFightImg.style.filter = "grayscale(100%)";
+                    document.getElementById("fightResult").innerText = "Je hebt verloren!";
+                    fightResultText = `Helaas, ${currentHero.name} werd overtroffen door ${randomVillain.name}. ${getRandomLossReason()}`;
+                }
+                document.getElementById("fightResult").style.display = "block";
+                showFadeOverlay(fightResultText);
+            }, 10000); // Increased fight duration to 10 seconds
+        }
+
+        function showFadeOverlay(text) {
+            const fadeOverlay = document.getElementById("fadeOverlay");
+            fadeOverlay.innerText = text;
+            fadeOverlay.style.display = "block";
+            playSound('fadeSound');
+            setTimeout(() => {
+                fadeOverlay.style.display = "none";
+                location.reload();
+            }, 5000);
+        }
+
+        function getRandomLossReason() {
+            const reasons = [
+                "De schurk gebruikte een krachtig wapen!",
+                "Onze held werd verrast door een onverwachte aanval.",
+                "De schurk had een strategisch voordeel.",
+                "Onze helds krachten waren uitgeput."
+            ];
+            return reasons[Math.floor(Math.random() * reasons.length)];
+        }
+    </script>
+</body>
+</html>
